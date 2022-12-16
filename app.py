@@ -4,14 +4,16 @@ import streamlit as st
 import torch
 from diffusers import StableDiffusionPipeline, EulerAncestralDiscreteScheduler
 
-repo = "Bingsu/my-korean-stable-diffusion-v1-5"
+repo = "runwayml/stable-diffusion-v1-5"
 euler_ancestral_scheduler = EulerAncestralDiscreteScheduler.from_config(repo, subfolder="scheduler")
 
 @st.cache(hash_funcs={torch.nn.parameter.Parameter: lambda _: None}, allow_output_mutation=True)
 def load_model():
     return StableDiffusionPipeline.from_pretrained(
-        repo, scheduler=euler_ancestral_scheduler, torch_dtype=torch.float32
+        repo, scheduler=euler_ancestral_scheduler, torch_dtype=torch.float32, revision="fp16"
     ).to("cpu")
+#pipe.enable_sequential_cpu_offload()
+#pipe.enable_attention_slicing(1)
 
 diffuser = load_model()
 
@@ -35,6 +37,7 @@ if submit:
         # 원하는 모델로 변경할 수 있다.
         seed = random.randrange(10000, 99999)
         generator = torch.Generator().manual_seed(seed)
-        results = diffuser(prompt, num_inference_steps=25, generator=generator).images[0]
+        print(prompt)
+        results = diffuser(prompt,num_inference_steps=25, generator=generator).images[0]
 
     st.image(results, caption=prompt)
